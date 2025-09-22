@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+Ant-Version: Apache Ant 1.10.14
+Created-By: 21.0.8+9-LTS (Eclipse Adoptium)
+Class-Path: 
+X-COMMENT: Main-Class will be added automatically by build
+Main-Class: bookstore_gui.BookStore_GUI
+

@@ -1,84 +1,107 @@
-// File: src/Bookstore_gui/view/books/BooksView.java
 package Bookstore_gui.view.books;
 
 import Bookstore_gui.controller.CartController;
+import Bookstore_gui.model.BookProduct;
+import Bookstore_gui.repo.BookRepository;
+import Bookstore_gui.util.Money;
+import Bookstore_gui.util.Resources;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.JTableHeader;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class BooksView extends JPanel {
-    private final CartController cart; // why: 담기 연결 | add-to-cart
-    private final JTextField tfSearch = new JTextField(20);
-    private final JButton btnSearch = new JButton("Search");
-    private final JButton btnAdd    = new JButton("Add to Cart");
-    private final JTable table;
-    private final DefaultTableModel model;
+    private static final int CARD_W = 180;
+    private static final int CARD_H = 300;
+    private static final int GAP    = 16;
 
-    public BooksView(CartController cart){
+    private final BookRepository repo;
+    private final CartController cart;
+    private final JPanel grid = new JPanel(new GridLayout(0, 1, GAP, GAP));
+    private List<BookProduct> all;
+    private List<BookProduct> shown;
+
+    public BooksView(BookRepository repo, CartController cart) {
+        this.repo = repo;
         this.cart = cart;
-        setLayout(new BorderLayout(8,8));
-        setBorder(BorderFactory.createEmptyBorder(12,12,12,12));
+        setLayout(new BorderLayout());
+        setBorder(BorderFactory.createEmptyBorder(16,16,16,16));
 
-        JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 8));
-        top.add(new JLabel("Keyword:"));
-        top.add(tfSearch); top.add(btnSearch);
-        add(top, BorderLayout.NORTH);
+        JScrollPane sp = new JScrollPane(grid);
+        sp.getVerticalScrollBar().setUnitIncrement(16);
+        add(sp, BorderLayout.CENTER);
 
-        model = new DefaultTableModel(new Object[]{"Title","Author","Price","Stock","ID"}, 0){
-            @Override public boolean isCellEditable(int r,int c){ return false; }
-        };
-        table = new JTable(model); table.setRowHeight(22);
+        all = repo.findAll();
+        if(all == null) all = java.util.Collections.emptyList();
+        shown = all;
+        rebuildGrid();
 
-        // 숫자 우정렬 | right align numbers
-        DefaultTableCellRenderer right = new DefaultTableCellRenderer();
-        right.setHorizontalAlignment(SwingConstants.RIGHT);
-        table.getColumnModel().getColumn(2).setCellRenderer(right);
-        table.getColumnModel().getColumn(3).setCellRenderer(right);
-
-        // ID 숨김 | hide ID
-        add(new JScrollPane(table), BorderLayout.CENTER);
-        table.removeColumn(table.getColumnModel().getColumn(4));
-
-        JTableHeader h = table.getTableHeader();
-        h.setFont(h.getFont().deriveFont(Font.BOLD));
-
-        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT,8,8));
-        bottom.add(btnAdd); add(bottom, BorderLayout.SOUTH);
-
-        seedDemoRows(); // why: 화면 확인용 더미 | demo rows for UI check
-
-        btnSearch.addActionListener(e -> doSearch());
-        btnAdd.addActionListener(e -> doAdd());
+        addComponentListener(new ComponentAdapter() {
+            @Override public void componentResized(ComponentEvent e) { relayoutColumns(); }
+        });
     }
 
-    private void doSearch(){
-        String q = tfSearch.getText().trim().toLowerCase();
-        seedDemoRows(); // reset demo rows first
-        if(q.isEmpty()) return;
-        for(int i = model.getRowCount()-1; i >= 0; i--){
-            String title = String.valueOf(model.getValueAt(i,0)).toLowerCase();
-            if(!title.contains(q)) model.removeRow(i);
+    public void applyQuery(String q) {
+        if (q == null || q.isBlank()) shown = all;
+        else {
+            String key = q.toLowerCase();
+            shown = all.stream().filter(b ->
+                safe(b.getName()).contains(key) || safe(b.getAuthor()).contains(key)
+            ).collect(Collectors.toList());
         }
+        rebuildGrid();
     }
 
-    private void doAdd(){
-        int r = table.getSelectedRow();
-        if(r < 0){ JOptionPane.showMessageDialog(this, "Select a book"); return; }
-        String title = String.valueOf(model.getValueAt(r, 0));
-        double price = Double.parseDouble(String.valueOf(model.getValueAt(r, 2)));
-        String id    = String.valueOf(model.getValueAt(r, 4)); // hidden column
-        cart.add(id, title, price, 1);
-        JOptionPane.showMessageDialog(this, "Added: " + title);
+  private void rebuildGrid() {
+    grid.removeAll();
+
+    for (BookProduct b : shown) {
+        // 1) 이미지 경로 만들기
+        String id = b.getId();
+        String imgPath = "/Bookstore_gui/view/common/images/books/" + id + ".jpg";
+
+        // 2) 클래스패스에서 이미지 로드 + 로그
+        ImageIcon raw = Bookstore_gui.util.Resources.icon(imgPath);
+        System.out.println("[IMG-LOAD] try=" + imgPath + " found=" + (raw != null));
+
+        // 3) 스케일 또는 플레이스홀더
+        ImageIcon coverIcon = (raw != null)
+                ? Bookstore_gui.util.Resources.scale(raw, 160, 240)
+                : Bookstore_gui.util.Resources.placeholder(160, 240);
+
+        // 4) 람다에서 캡처할 final 변수로 고정
+        final BookProduct book = b;
+        final ImageIcon fcov = coverIcon;
+
+        // 5) 카드 생성 + 클릭 시 상세
+        BookCard card = new BookCard(book, fcov, CARD_W, CARD_H, () -> showDetails(book, fcov));
+        grid.add(card);
     }
 
-    private void seedDemoRows(){
-        model.setRowCount(0);
-        model.addRow(new Object[]{"Clean Code","Robert C. Martin", 38.50, 5, "B001"});
-        model.addRow(new Object[]{"Effective Java","Joshua Bloch", 45.00, 3, "B002"});
-        model.addRow(new Object[]{"Refactoring","Martin Fowler", 49.90, 0, "B003"});
-        model.addRow(new Object[]{"Design Patterns","GoF", 59.00, 7, "B004"});
+    // 6) 레이아웃/리페인트
+        relayoutColumns();
+         grid.revalidate();
+         grid.repaint();
+        }
+
+    private void relayoutColumns() {
+        int w = Math.max(1, getWidth() - 2*16);
+        int col = Math.max(1, w / (CARD_W + GAP));
+        grid.setLayout(new GridLayout(0, col, GAP, GAP));
+        grid.revalidate();
     }
+
+    private void showDetails(BookProduct book, ImageIcon icon) {
+        new BookDetailsDialog(SwingUtilities.getWindowAncestor(this), book, icon, qty -> {
+            // FIX: match CartController signature (id, title, price, qty)
+            cart.add(book.getId(), book.getName(), book.getPrice(), qty);
+            JOptionPane.showMessageDialog(this, "Added to cart: " + book.getName()
+                    + " x" + qty + "  (" + Money.fmt(book.getPrice()*qty) + ")");
+        }).setVisible(true);
+    }
+
+    private static String safe(String s){ return s==null ? "" : s.toLowerCase(); }
 }

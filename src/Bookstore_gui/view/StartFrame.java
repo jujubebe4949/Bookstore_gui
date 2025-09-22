@@ -1,48 +1,59 @@
 package Bookstore_gui.view;
 
+import Bookstore_gui.controller.UserContext;
+
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * KOR: 시작 화면 (배경 + 로그인 카드, placeholder 구현 포함)
- * ENG: Start screen (background + login card, with placeholder fields)
- */
 public class StartFrame extends JFrame {
+    private final UserContext userCtx = new UserContext();
+
     public StartFrame() {
-        setTitle("Bookstore"); setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setTitle("Bookstore");
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+
         BackgroundPanel root = new BackgroundPanel("/Bookstore_gui/view/common/mainimage.jpg");
         setContentPane(root); root.setLayout(new BorderLayout());
 
         JPanel rightWrap = new JPanel(new GridBagLayout());
         rightWrap.setOpaque(false);
-        rightWrap.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 28));
+        rightWrap.setBorder(BorderFactory.createEmptyBorder(0,0,0,28));
         root.add(rightWrap, BorderLayout.EAST);
 
         JPanel card = Ui.roundedCard();
-        GridBagConstraints c = new GridBagConstraints();
         card.setLayout(new GridBagLayout());
-        c.insets = new Insets(10,14,10,14);
+        GridBagConstraints c = new GridBagConstraints();
+        c.insets = new Insets(10, 14, 10, 14);
         c.fill = GridBagConstraints.HORIZONTAL;
-        c.gridx=0; c.gridy=0;
+        c.gridx = 0; c.gridy = 0;
 
-        JLabel title = new JLabel("Sign In"); title.setFont(Ui.H1);
+        JLabel title = new JLabel("Sign In");
+        title.setFont(title.getFont().deriveFont(Font.BOLD, 18f));
         card.add(title, c);
 
-        c.gridy++; JTextField tfName  = createPlaceholderField("Name");  tfName.setColumns(18);
+        c.gridy++; JTextField tfName  = createPlaceholderField("Name");
         card.add(tfName, c);
-
-        c.gridy++; JTextField tfEmail = createPlaceholderField("Email"); tfEmail.setColumns(18);
+        c.gridy++; JTextField tfEmail = createPlaceholderField("Email (as ID)");
         card.add(tfEmail, c);
-
-        c.gridy++; JButton btn = Ui.primaryButton("Enter");
+        c.gridy++; JButton btn = new JButton("Enter");
         card.add(btn, c);
 
-        // 카드 자체 폭 고정 느낌
-        card.setPreferredSize(new Dimension(320, 0));
         rightWrap.add(card, new GridBagConstraints());
 
-        btn.addActionListener(e -> { new MainFrame().setVisible(true); dispose(); });
-        setSize(1100, 620); setLocationRelativeTo(null);
+        btn.addActionListener(e -> {
+            String name = tfName.getText().trim();
+            String email = tfEmail.getText().trim();
+            if(name.isEmpty() || email.isEmpty()){
+                JOptionPane.showMessageDialog(this, "Enter name and email");
+                return;
+            }
+            userCtx.signIn(email, name); // id=email
+            new MainFrame().setVisible(true);
+            dispose();
+        });
+
+        setSize(1100, 620);
+        setLocationRelativeTo(null);
     }
 
     private JTextField createPlaceholderField(String ph) {
