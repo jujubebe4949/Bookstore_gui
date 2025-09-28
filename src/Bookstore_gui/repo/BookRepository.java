@@ -1,13 +1,15 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package Bookstore_gui.repo;
 
-import java.util.*;
-import Bookstore_gui.model.BookProduct; // <-- your previous class (move under this package)
+import Bookstore_gui.model.BookProduct;
+import java.util.List;
 
 public interface BookRepository {
     List<BookProduct> findAll();
-    Optional<BookProduct> findById(String id);
+    List<BookProduct> findByTitleLike(String key); // 이미 있을 경우 그대로 유지
+
+    // NEW: 재고 조회
+    int getStock(String productId);
+
+    // 이미 있다면 유지, 없다면 추가:
+    int updateStockDelta(String productId, int delta);
 }

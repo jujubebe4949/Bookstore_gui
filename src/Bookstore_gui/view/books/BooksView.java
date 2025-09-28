@@ -1,3 +1,4 @@
+// File: src/Bookstore_gui/view/books/BooksView.java
 package Bookstore_gui.view.books;
 
 import Bookstore_gui.controller.CartController;
@@ -11,7 +12,6 @@ import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class BooksView extends JPanel {
     private static final int CARD_W = 180;
@@ -21,7 +21,6 @@ public class BooksView extends JPanel {
     private final BookRepository repo;
     private final CartController cart;
     private final JPanel grid = new JPanel(new GridLayout(0, 1, GAP, GAP));
-    private List<BookProduct> all;
     private List<BookProduct> shown;
 
     public BooksView(BookRepository repo, CartController cart) {
@@ -34,58 +33,61 @@ public class BooksView extends JPanel {
         sp.getVerticalScrollBar().setUnitIncrement(16);
         add(sp, BorderLayout.CENTER);
 
-        all = repo.findAll();
-        if(all == null) all = java.util.Collections.emptyList();
-        shown = all;
-        rebuildGrid();
-
         addComponentListener(new ComponentAdapter() {
             @Override public void componentResized(ComponentEvent e) { relayoutColumns(); }
         });
+
+        // 첫 로드: DB에서 전체 목록
+        applyQuery("");
     }
 
+    /** 항상 DB에서 읽어서 shown을 갱신 */
     public void applyQuery(String q) {
-        if (q == null || q.isBlank()) shown = all;
-        else {
-            String key = q.toLowerCase();
-            shown = all.stream().filter(b ->
-                safe(b.getName()).contains(key) || safe(b.getAuthor()).contains(key)
-            ).collect(Collectors.toList());
+        try {
+            if (q == null || q.isBlank()) {
+                shown = repo.findAll();
+            } else if (repo instanceof Bookstore_gui.db.DbBookRepository dbRepo) {
+                shown = dbRepo.findByTitleLike(q);
+            } else {
+                // 인터페이스에 검색이 없을 때 폴백(전체 읽은 뒤 필터)
+                var all = repo.findAll();
+                String key = q.toLowerCase();
+                shown = all.stream()
+                        .filter(b -> safe(b.getName()).contains(key) ||
+                                     safe(b.getAuthor()).contains(key))
+                        .toList();
+            }
+            rebuildGrid();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Search failed: " + e.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
+            shown = java.util.Collections.emptyList();
+            rebuildGrid();
         }
-        rebuildGrid();
     }
 
-  private void rebuildGrid() {
-    grid.removeAll();
+    private void rebuildGrid() {
+        grid.removeAll();
+        if (shown != null) {
+            for (BookProduct b : shown) {
+                String id = b.getId();
+                String imgPath = "/Bookstore_gui/view/common/images/books/" + id + ".jpg";
+                ImageIcon raw = Resources.icon(imgPath);
+                ImageIcon coverIcon = (raw != null)
+                        ? Resources.scale(raw, 160, 240)
+                        : Resources.placeholder(160, 240);
 
-    for (BookProduct b : shown) {
-        // 1) 이미지 경로 만들기
-        String id = b.getId();
-        String imgPath = "/Bookstore_gui/view/common/images/books/" + id + ".jpg";
-
-        // 2) 클래스패스에서 이미지 로드 + 로그
-        ImageIcon raw = Bookstore_gui.util.Resources.icon(imgPath);
-        System.out.println("[IMG-LOAD] try=" + imgPath + " found=" + (raw != null));
-
-        // 3) 스케일 또는 플레이스홀더
-        ImageIcon coverIcon = (raw != null)
-                ? Bookstore_gui.util.Resources.scale(raw, 160, 240)
-                : Bookstore_gui.util.Resources.placeholder(160, 240);
-
-        // 4) 람다에서 캡처할 final 변수로 고정
-        final BookProduct book = b;
-        final ImageIcon fcov = coverIcon;
-
-        // 5) 카드 생성 + 클릭 시 상세
-        BookCard card = new BookCard(book, fcov, CARD_W, CARD_H, () -> showDetails(book, fcov));
-        grid.add(card);
-    }
-
-    // 6) 레이아웃/리페인트
+                final BookProduct book = b;
+                final ImageIcon fcov = coverIcon;
+                BookCard card = new BookCard(book, fcov, CARD_W, CARD_H,
+                        () -> showDetails(book, fcov));
+                grid.add(card);
+            }
+        }
         relayoutColumns();
-         grid.revalidate();
-         grid.repaint();
-        }
+        grid.revalidate();
+        grid.repaint();
+    }
 
     private void relayoutColumns() {
         int w = Math.max(1, getWidth() - 2*16);
@@ -94,13 +96,20 @@ public class BooksView extends JPanel {
         grid.revalidate();
     }
 
+    /** BookDetailsDialog에 repo 전달하도록 수정 */
     private void showDetails(BookProduct book, ImageIcon icon) {
-        new BookDetailsDialog(SwingUtilities.getWindowAncestor(this), book, icon, qty -> {
-            // FIX: match CartController signature (id, title, price, qty)
-            cart.add(book.getId(), book.getName(), book.getPrice(), qty);
-            JOptionPane.showMessageDialog(this, "Added to cart: " + book.getName()
-                    + " x" + qty + "  (" + Money.fmt(book.getPrice()*qty) + ")");
-        }).setVisible(true);
+        new BookDetailsDialog(
+                SwingUtilities.getWindowAncestor(this),
+                book,
+                icon,
+                repo, // ✅ 재고 검증용 BookRepository 전달
+                qty -> {
+                    cart.add(book.getId(), book.getName(), book.getPrice(), qty);
+                    JOptionPane.showMessageDialog(this,
+                            "Added to cart: " + book.getName()
+                                    + " x" + qty + "  (" + Money.fmt(book.getPrice()*qty) + ")");
+                }
+        ).setVisible(true);
     }
 
     private static String safe(String s){ return s==null ? "" : s.toLowerCase(); }

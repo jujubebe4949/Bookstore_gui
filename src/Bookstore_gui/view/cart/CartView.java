@@ -1,84 +1,114 @@
-// ====================================================================
-// File: src/Bookstore_gui/view/cart/CartView.java  (수정 포인트만)
-// KOR: 체크아웃 시 미로그인 -> 로그인 다이얼로그 호출
-// ENG: At checkout, if not signed in -> open LoginDialog
-// ====================================================================
 package Bookstore_gui.view.cart;
 
 import Bookstore_gui.controller.CartController;
 import Bookstore_gui.controller.UserContext;
 import Bookstore_gui.model.Order;
 import Bookstore_gui.repo.OrderRepository;
-import Bookstore_gui.util.Resources;
-import Bookstore_gui.view.common.Renderers;
-import Bookstore_gui.view.common.LoginDialog;
-import Bookstore_gui.util.Money;
+import Bookstore_gui.repo.BookRepository;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
 
 public class CartView extends JPanel {
     private final CartController cart;
     private final OrderRepository orders;
     private final UserContext userCtx;
-    private final Runnable afterCheckout;
-
+    private final Runnable afterCheckout; // 주문 후 OrdersView.refresh
+    private final Runnable onBack;        // BOOKS 화면으로 복귀
+    private final BookRepository bookRepo;  
+    
     private final DefaultTableModel model = new DefaultTableModel(
-            new Object[]{"", "Title", "Qty", "Price", "Subtotal", "ID"}, 0) {
-        @Override public boolean isCellEditable(int r,int c){return false;}
-        @Override public Class<?> getColumnClass(int c){ return c==0? Icon.class : Object.class; }
+            new Object[]{"Title","Qty","Price","Subtotal"}, 0) {
+        @Override public boolean isCellEditable(int r,int c){ return false; }
     };
     private final JTable table = new JTable(model);
 
-    public CartView(CartController cart, OrderRepository orders, UserContext userCtx, Runnable afterCheckout) {
-        this.cart = cart; this.orders = orders; this.userCtx = userCtx; this.afterCheckout = afterCheckout;
-        setLayout(new BorderLayout(8,8)); setBorder(BorderFactory.createEmptyBorder(12,12,12,12));
+    public CartView(CartController cart,
+                    OrderRepository orders,
+                    UserContext userCtx,
+                    BookRepository bookRepo,  
+                    Runnable afterCheckout,
+                    Runnable onBack) {
+        this.cart = cart;
+        this.orders = orders;
+        this.userCtx = userCtx;
+        this.bookRepo = bookRepo;    
+        this.afterCheckout = afterCheckout;
+        this.onBack = onBack;
 
-        table.setRowHeight(64);
-        table.getColumnModel().getColumn(0).setPreferredWidth(52);
-        table.getColumnModel().getColumn(0).setCellRenderer(new Renderers.ThumbRenderer());
+        setLayout(new BorderLayout(8,8));
+        setBorder(BorderFactory.createEmptyBorder(12,12,12,12));
         add(new JScrollPane(table), BorderLayout.CENTER);
-        table.removeColumn(table.getColumnModel().getColumn(5));
 
-        JButton btnRemove=new JButton("Remove Selected");
-        JButton btnCheckout=new JButton("Checkout");
-        JPanel south=new JPanel(new FlowLayout(FlowLayout.RIGHT,8,8));
-        south.add(btnRemove); south.add(btnCheckout); add(south, BorderLayout.SOUTH);
+        // --- 하단 버튼 ---
+        JPanel south = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton btnBack = new JButton("Back");
+        JButton btnCheckout = new JButton("Checkout");
+        south.add(btnBack);
+        south.add(btnCheckout);
+        add(south, BorderLayout.SOUTH);
 
-        btnRemove.addActionListener(e -> {
-            int r=table.getSelectedRow(); if(r<0){JOptionPane.showMessageDialog(this,"Select an item");return;}
-            String id=(String)model.getValueAt(r,5); cart.remove(id); refresh();
+        // --- 버튼 이벤트 ---
+        btnBack.addActionListener(e -> { 
+            if (onBack != null) onBack.run(); 
         });
 
-        btnCheckout.addActionListener(e -> {
-            if(cart.lines().isEmpty()){JOptionPane.showMessageDialog(this,"Cart empty");return;}
-
-            // --- 핵심: 미로그인 → 로그인 다이얼로그 호출 ---
-            if(!userCtx.isSignedIn()){
-                boolean ok = LoginDialog.show(this, userCtx);
-                if(!ok){ JOptionPane.showMessageDialog(this, "Sign in required."); return; }
-            }
-
-            List<Order.Item> items = new ArrayList<>();
-            for(var l : cart.lines()) items.add(new Order.Item(l.id, l.title, l.qty, l.price));
-
-            String orderId = orders.create(userCtx.getUserId(), items);
-            cart.clear(); refresh();
-            JOptionPane.showMessageDialog(this, "Order created: #" + (orderId.length()>8?orderId.substring(0,8):orderId));
-            if(afterCheckout!=null) afterCheckout.run();
-        });
+        btnCheckout.addActionListener(e -> checkout());
     }
 
-    public void refresh(){
+    /** 장바구니 최신 상태 반영 */
+    public void refresh() {
         model.setRowCount(0);
-        for(var l: cart.lines()){
-            String imgPath = "/Bookstore_gui/view/common/images/books/" + l.id + ".jpg";
-            ImageIcon cover = Resources.image(imgPath, 40, 60);
-            if (cover == null) cover = Resources.placeholder(40, 60);
-            model.addRow(new Object[]{cover, l.title, l.qty, Money.fmt(l.price), Money.fmt(l.price*l.qty), l.id});
+        for (CartController.Line l : cart.lines()) {
+            model.addRow(new Object[]{
+                    l.title,
+                    l.qty,
+                    String.format("$%.2f", l.price),
+                    String.format("$%.2f", l.subtotal())
+            });
+        }
+    }
+
+    /** 체크아웃 로직 */
+    private void checkout() {
+        String uid = userCtx.getUserId();
+        if (uid == null || uid.isBlank()) {
+            JOptionPane.showMessageDialog(this, 
+                    "Please sign in first.",
+                    "Not logged in", 
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        if (cart.lines().isEmpty()) {
+            JOptionPane.showMessageDialog(this, 
+                    "Your cart is empty. Please add items before checkout.",
+                    "Empty cart", 
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        try {
+            List<Order.Item> items = cart.lines().stream()
+                    .map(l -> new Order.Item(l.id, l.title, l.qty, l.price))
+                    .toList();
+
+            String orderId = orders.create(uid, items);
+
+            cart.clear();
+            refresh();
+
+            JOptionPane.showMessageDialog(this, 
+                    "Order placed successfully!\nOrder ID: " + orderId,
+                    "Order Confirmed", 
+                    JOptionPane.INFORMATION_MESSAGE);
+
+            if (afterCheckout != null) afterCheckout.run();
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, 
+                    "Checkout failed: " + ex.getMessage(),
+                    "Error", 
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 }

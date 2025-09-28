@@ -1,21 +1,26 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package Bookstore_gui.controller;
 
-/**
- *
- * @author julia
- */
 public class UserContext {
-     private String userId;   // why: 주문 소유자 식별 / owner id
-    private String userName; // why: 환영/표시용   / display name
+    private String userId;
+    private String name;
+    private String email;
+
+    public void setUser(String userId, String name, String email) {
+        this.userId = userId;
+        this.name   = name;
+        this.email  = email;
+    }
+
+    // ✅ StartFrame 호환용 signIn
+    public void signIn(String email, String name) {
+        this.userId = email;  // 임시로 email을 id로 사용
+        this.name   = name;
+        this.email  = email;
+    }
 
     public String getUserId() { return userId; }
-    public String getUserName() { return userName; }
-
-    public void signIn(String id, String name){ this.userId = id; this.userName = name; }
-    public void signOut(){ this.userId = null; this.userName = null; }
-    public boolean isSignedIn(){ return userId != null && !userId.isEmpty(); }
+    public String getName()   { return name; }
+    public String getEmail()  { return email; }
+    public boolean isSignedIn() { return userId != null; }
+    public void signOut() { userId = name = email = null; }
 }

@@ -1,11 +1,14 @@
 package Bookstore_gui.view;
 
 import Bookstore_gui.controller.UserContext;
+import Bookstore_gui.db.DbUserRepository;
+import Bookstore_gui.repo.UserRepository;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class StartFrame extends JFrame {
+    private final UserRepository users = new DbUserRepository();
     private final UserContext userCtx = new UserContext();
 
     public StartFrame() {
@@ -47,9 +50,18 @@ public class StartFrame extends JFrame {
                 JOptionPane.showMessageDialog(this, "Enter name and email");
                 return;
             }
-            userCtx.signIn(email, name); // id=email
-            new MainFrame().setVisible(true);
-            dispose();
+            try {
+                // DB에서 사용자 확인/생성
+                String uid = users.findOrCreate(name, email);
+                userCtx.setUser(uid, name, email);
+
+                new MainFrame(userCtx).setVisible(true);
+                dispose();
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this,
+                        "Login failed: " + ex.getMessage(),
+                        "Error", JOptionPane.ERROR_MESSAGE);
+            }
         });
 
         setSize(1100, 620);

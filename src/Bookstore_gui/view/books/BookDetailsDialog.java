@@ -1,60 +1,117 @@
-// =======================================
-// File: src/Bookstore_gui/view/books/BookDetailsDialog.java
-// 상세 다이얼로그(표지 + 제목/저자/가격/설명 + 수량/카트)
-// =======================================
 package Bookstore_gui.view.books;
 
 import Bookstore_gui.model.BookProduct;
-import Bookstore_gui.util.Money;
+import Bookstore_gui.repo.BookRepository;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.function.IntConsumer;
 
+/**
+ * Book details popup dialog with stock validation.
+ * - Shows cover, title, author, price, stock.
+ * - User enters quantity, checked against stock.
+ * - On success → callback to add to cart.
+ */
 public class BookDetailsDialog extends JDialog {
-    public BookDetailsDialog(Window owner, BookProduct b, ImageIcon cover, IntConsumer onAdd) {
-        super(owner, "Book Details", ModalityType.APPLICATION_MODAL);
-        setSize(700, 520);
+    private final JTextField tfQty = new JTextField("1", 6);
+    private final BookRepository repo;
+    private final BookProduct book;
+
+    public BookDetailsDialog(Window owner,
+                             BookProduct book,
+                             ImageIcon cover,
+                             BookRepository repo,
+                             IntConsumer onOk) {
+        super(owner, "Add to Cart", ModalityType.APPLICATION_MODAL);
+        this.repo = repo;
+        this.book = book;
+
+        setLayout(new BorderLayout(8, 8));
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+
+        // --- center area: book cover + info ---
+        JPanel center = new JPanel(new BorderLayout(8, 8));
+        if (cover != null) {
+            center.add(new JLabel(cover), BorderLayout.WEST);
+        }
+
+        JPanel info = new JPanel();
+        info.setLayout(new BoxLayout(info, BoxLayout.Y_AXIS));
+        info.add(new JLabel(book.getName()));
+        info.add(new JLabel("By " + (book.getAuthor() == null ? "" : book.getAuthor())));
+        info.add(new JLabel(String.format("Price: $%.2f", book.getPrice())));
+        info.add(Box.createVerticalStrut(8));
+
+        // --- stock check ---
+        int currentStock = 0;
+        try {
+            currentStock = repo.getStock(book.getId());
+        } catch (Exception ex) {
+            // fallback in case of DB error
+            JOptionPane.showMessageDialog(this,
+                    "Failed to load stock info: " + ex.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
+        }
+        info.add(new JLabel("In stock: " + currentStock));
+
+        // --- qty input row ---
+        JPanel qtyRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        qtyRow.add(new JLabel("Qty:"));
+        qtyRow.add(tfQty);
+        info.add(qtyRow);
+
+        center.add(info, BorderLayout.CENTER);
+        add(center, BorderLayout.CENTER);
+
+        // --- south buttons ---
+        JPanel south = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton btnCancel = new JButton("Cancel");
+        JButton btnAdd = new JButton("Add");
+        south.add(btnCancel);
+        south.add(btnAdd);
+        add(south, BorderLayout.SOUTH);
+
+        btnCancel.addActionListener(e -> dispose());
+        btnAdd.addActionListener(e -> submit(onOk));
+
+        pack();
         setLocationRelativeTo(owner);
-        setLayout(new BorderLayout(12,12));
-        ((JComponent)getContentPane()).setBorder(BorderFactory.createEmptyBorder(12,12,12,12));
+    }
 
-        // 좌: 큰 표지
-        JLabel img = new JLabel(cover);
-        img.setHorizontalAlignment(SwingConstants.CENTER);
-        img.setBorder(BorderFactory.createLineBorder(new Color(230,230,230)));
-        add(img, BorderLayout.WEST);
+    /** Validate quantity and call onOk if valid */
+    private void submit(IntConsumer onOk) {
+        try {
+            int qty = Integer.parseInt(tfQty.getText().trim());
+            if (qty <= 0) {
+                JOptionPane.showMessageDialog(this,
+                        "Quantity must be a positive integer.",
+                        "Invalid Quantity", JOptionPane.WARNING_MESSAGE);
+                tfQty.requestFocus();
+                return;
+            }
 
-        // 우: 텍스트
-        JPanel right = new JPanel();
-        right.setLayout(new BoxLayout(right, BoxLayout.Y_AXIS));
-        JLabel title = new JLabel(b.getName());
-        title.setFont(title.getFont().deriveFont(Font.BOLD, 20f));
-        JLabel author = new JLabel("by " + b.getAuthor());
-        JLabel price = new JLabel(Money.fmt(b.getPrice()));
-        price.setForeground(new Color(0,120,0));
-        JTextArea desc = new JTextArea(b.getDescription());
-        desc.setLineWrap(true); desc.setWrapStyleWord(true); desc.setEditable(false);
-        desc.setBorder(BorderFactory.createEmptyBorder(8,0,8,0));
+            int stock = repo.getStock(book.getId()); // 최신 재고 조회
+            if (qty > stock) {
+                JOptionPane.showMessageDialog(this,
+                        "Only " + stock + " in stock.",
+                        "Insufficient Stock", JOptionPane.WARNING_MESSAGE);
+                tfQty.requestFocus();
+                return;
+            }
 
-        JPanel buy = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-        JSpinner spQty = new JSpinner(new SpinnerNumberModel(1,1,99,1));
-        JButton btnAdd = new JButton("Add to Cart");
-        buy.add(new JLabel("Qty:")); buy.add(spQty); buy.add(btnAdd);
-
-        right.add(title); right.add(Box.createVerticalStrut(4));
-        right.add(author); right.add(Box.createVerticalStrut(12));
-        right.add(price);  right.add(Box.createVerticalStrut(12));
-        right.add(new JScrollPane(desc));
-        right.add(Box.createVerticalStrut(12));
-        right.add(buy);
-
-        add(right, BorderLayout.CENTER);
-
-        btnAdd.addActionListener(e -> {
-            int q = (int) spQty.getValue();
-            onAdd.accept(q); // why: 카트 연결은 콜백으로 외부에 위임
+            // Success → callback
+            onOk.accept(qty);
             dispose();
-        });
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this,
+                    "Please enter a valid integer quantity.",
+                    "Invalid Input", JOptionPane.WARNING_MESSAGE);
+            tfQty.requestFocus();
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this,
+                    "Unexpected error: " + ex.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 }
