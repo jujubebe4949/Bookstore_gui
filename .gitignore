@@ -1,1 +1,21 @@
-/dist/
+# NetBeans/Java build
+/build/
+nbproject/private/
+*.class
+
+# Derby embedded files
+BookStoreDB/
+derby.log
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+
+# IDE
+*.iml
+.idea/
+.vscode/
+
+# Misc
+*.tmp
+*.log
