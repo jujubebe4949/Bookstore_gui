@@ -1,4 +1,3 @@
-// File: src/Bookstore_gui/view/books/BooksView.java
 package Bookstore_gui.view.books;
 
 import Bookstore_gui.controller.CartController;
@@ -6,6 +5,7 @@ import Bookstore_gui.model.BookProduct;
 import Bookstore_gui.repo.BookRepository;
 import Bookstore_gui.util.Money;
 import Bookstore_gui.util.Resources;
+import Bookstore_gui.view.common.ErrorBanner;
 
 import javax.swing.*;
 import java.awt.*;
@@ -18,6 +18,7 @@ public class BooksView extends JPanel {
     private static final int CARD_H = 300;
     private static final int GAP    = 16;
 
+    private final ErrorBanner errorBanner = new ErrorBanner();
     private final BookRepository repo;
     private final CartController cart;
     private final JPanel grid = new JPanel(new GridLayout(0, 1, GAP, GAP));
@@ -29,6 +30,8 @@ public class BooksView extends JPanel {
         setLayout(new BorderLayout());
         setBorder(BorderFactory.createEmptyBorder(16,16,16,16));
 
+        add(errorBanner,BorderLayout.NORTH);
+        
         JScrollPane sp = new JScrollPane(grid);
         sp.getVerticalScrollBar().setUnitIncrement(16);
         add(sp, BorderLayout.CENTER);
@@ -36,20 +39,20 @@ public class BooksView extends JPanel {
         addComponentListener(new ComponentAdapter() {
             @Override public void componentResized(ComponentEvent e) { relayoutColumns(); }
         });
-
-        // 첫 로드: DB에서 전체 목록
-        applyQuery("");
+        
+        applyQuery(""); //Load all books initially
     }
-
-    /** 항상 DB에서 읽어서 shown을 갱신 */
+    //Always refresh data from repository
     public void applyQuery(String q) {
         try {
+            //Empty query = load all books
             if (q == null || q.isBlank()) {
                 shown = repo.findAll();
-            } else if (repo instanceof Bookstore_gui.db.DbBookRepository dbRepo) {
+            }//Database-backed search if available 
+            else if (repo instanceof Bookstore_gui.db.DbBookRepository dbRepo) {
                 shown = dbRepo.findByTitleLike(q);
-            } else {
-                // 인터페이스에 검색이 없을 때 폴백(전체 읽은 뒤 필터)
+            }
+            else { //Fallback: filter in memory             
                 var all = repo.findAll();
                 String key = q.toLowerCase();
                 shown = all.stream()
@@ -57,10 +60,13 @@ public class BooksView extends JPanel {
                                      safe(b.getAuthor()).contains(key))
                         .toList();
             }
+            //Show bannerif no results
+            if(shown == null|| shown.isEmpty()){
+                errorBanner.showError("No books found for your search.");
+            }
             rebuildGrid();
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Search failed: " + e.getMessage(),
-                    "Error", JOptionPane.ERROR_MESSAGE);
+            errorBanner.showError("Search failed: " + e.getMessage());
             shown = java.util.Collections.emptyList();
             rebuildGrid();
         }
@@ -96,13 +102,12 @@ public class BooksView extends JPanel {
         grid.revalidate();
     }
 
-    /** BookDetailsDialog에 repo 전달하도록 수정 */
     private void showDetails(BookProduct book, ImageIcon icon) {
         new BookDetailsDialog(
                 SwingUtilities.getWindowAncestor(this),
                 book,
                 icon,
-                repo, // ✅ 재고 검증용 BookRepository 전달
+                repo, 
                 qty -> {
                     cart.add(book.getId(), book.getName(), book.getPrice(), qty);
                     JOptionPane.showMessageDialog(this,

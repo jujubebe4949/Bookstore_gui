@@ -17,7 +17,7 @@ public class DbSmokeTest {
 
     @Test
     public void canConnectAndQuery() throws Exception {
-        DbManager.initSchema(); // no-op이어도 안전
+        DbManager.initSchema(); 
         try (Connection c = DbManager.connect();
              Statement st = c.createStatement()) {
             ResultSet rs = st.executeQuery("SELECT 1 FROM SYSIBM.SYSDUMMY1");

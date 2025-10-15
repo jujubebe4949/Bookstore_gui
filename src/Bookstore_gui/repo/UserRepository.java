@@ -2,20 +2,14 @@
 package Bookstore_gui.repo;
 
 /**
- * User repository for Derby-embedded login.
- * - findByEmail: returns user id or null
- * - create: inserts and returns new user id
- * - findOrCreate: default composition of findByEmail + create
+ * User repository supporting password-based login and registration.
+ * Derby-compatible (Embedded).
  */
 public interface UserRepository {
 
-    /** Returns user id if exists, else null. */
     String findByEmail(String email);
-
-    /** Creates a new user and returns user id. */
     String create(String name, String email);
 
-    /** Finds by email; if not found, creates a new user. */
     default String findOrCreate(String name, String email) {
         final String n  = norm(name);
         final String em = norm(email).toLowerCase();
@@ -23,6 +17,17 @@ public interface UserRepository {
         return (id != null) ? id : create(n, em);
     }
 
+    /** Registers a new user with password and returns the user id. */
+    String register(String name, String email, String password);
+
+    /** Authenticates user. Returns user id if valid credentials, else null. */
+    String authenticate(String email, String password);
+
+    /** Updates user’s display name. */
+    boolean updateUserName(String userId, String newName);
+    
+    String authenticateByName(String name, String password); 
+    
     /** Minimal input normalization. */
     default String norm(String s) { return s == null ? "" : s.trim(); }
 }

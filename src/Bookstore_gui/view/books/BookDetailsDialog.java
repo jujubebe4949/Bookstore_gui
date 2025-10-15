@@ -1,7 +1,10 @@
+// File: src/Bookstore_gui/view/books/BookDetailsDialog.java
 package Bookstore_gui.view.books;
 
 import Bookstore_gui.model.BookProduct;
 import Bookstore_gui.repo.BookRepository;
+import Bookstore_gui.util.Money;
+import Bookstore_gui.view.common.ErrorBanner;
 
 import javax.swing.*;
 import java.awt.*;
@@ -9,14 +12,15 @@ import java.util.function.IntConsumer;
 
 /**
  * Book details popup dialog with stock validation.
- * - Shows cover, title, author, price, stock.
- * - User enters quantity, checked against stock.
- * - On success → callback to add to cart.
+ * Shows cover, title, author, price, stock, and allows adding to cart.
+ * Uses ErrorBanner for inline error display instead of popups.
  */
 public class BookDetailsDialog extends JDialog {
+
     private final JTextField tfQty = new JTextField("1", 6);
     private final BookRepository repo;
     private final BookProduct book;
+    private final ErrorBanner errorBanner = new ErrorBanner();
 
     public BookDetailsDialog(Window owner,
                              BookProduct book,
@@ -30,6 +34,9 @@ public class BookDetailsDialog extends JDialog {
         setLayout(new BorderLayout(8, 8));
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
+        // top banner for consistent inline error display
+        add(errorBanner, BorderLayout.NORTH);
+
         // --- center area: book cover + info ---
         JPanel center = new JPanel(new BorderLayout(8, 8));
         if (cover != null) {
@@ -40,7 +47,7 @@ public class BookDetailsDialog extends JDialog {
         info.setLayout(new BoxLayout(info, BoxLayout.Y_AXIS));
         info.add(new JLabel(book.getName()));
         info.add(new JLabel("By " + (book.getAuthor() == null ? "" : book.getAuthor())));
-        info.add(new JLabel(String.format("Price: $%.2f", book.getPrice())));
+        info.add(new JLabel("Price: " + Money.fmt(book.getPrice())));
         info.add(Box.createVerticalStrut(8));
 
         // --- stock check ---
@@ -48,10 +55,7 @@ public class BookDetailsDialog extends JDialog {
         try {
             currentStock = repo.getStock(book.getId());
         } catch (Exception ex) {
-            // fallback in case of DB error
-            JOptionPane.showMessageDialog(this,
-                    "Failed to load stock info: " + ex.getMessage(),
-                    "Error", JOptionPane.ERROR_MESSAGE);
+            errorBanner.showError("Failed to load stock info: " + ex.getMessage());
         }
         info.add(new JLabel("In stock: " + currentStock));
 
@@ -81,21 +85,19 @@ public class BookDetailsDialog extends JDialog {
 
     /** Validate quantity and call onOk if valid */
     private void submit(IntConsumer onOk) {
+        errorBanner.clear();
+
         try {
             int qty = Integer.parseInt(tfQty.getText().trim());
             if (qty <= 0) {
-                JOptionPane.showMessageDialog(this,
-                        "Quantity must be a positive integer.",
-                        "Invalid Quantity", JOptionPane.WARNING_MESSAGE);
+                errorBanner.showError("Quantity must be a positive integer.");
                 tfQty.requestFocus();
                 return;
             }
 
-            int stock = repo.getStock(book.getId()); // 최신 재고 조회
+            int stock = repo.getStock(book.getId());
             if (qty > stock) {
-                JOptionPane.showMessageDialog(this,
-                        "Only " + stock + " in stock.",
-                        "Insufficient Stock", JOptionPane.WARNING_MESSAGE);
+                errorBanner.showError("Only " + stock + " item(s) in stock.");
                 tfQty.requestFocus();
                 return;
             }
@@ -104,14 +106,10 @@ public class BookDetailsDialog extends JDialog {
             onOk.accept(qty);
             dispose();
         } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this,
-                    "Please enter a valid integer quantity.",
-                    "Invalid Input", JOptionPane.WARNING_MESSAGE);
+            errorBanner.showError("Please enter a valid integer quantity.");
             tfQty.requestFocus();
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this,
-                    "Unexpected error: " + ex.getMessage(),
-                    "Error", JOptionPane.ERROR_MESSAGE);
+            errorBanner.showError("Unexpected error: " + ex.getMessage());
         }
     }
 }

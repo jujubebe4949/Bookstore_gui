@@ -56,10 +56,9 @@ public class DbBookRepositoryTest {
     }
     @Test
     public void searchByTitleLike() {
-        // 준비: 보장
+        
         repo.add(new BookProduct(ID, "JUnit In Action", "desc", 10.0, 3, "Tester"));
 
-        // 대소문자 무시 부분검색
         List<BookProduct> hit = repo.findByTitleLike("junit");
         assertTrue(hit.stream().anyMatch(b -> ID.equals(b.getId())));
     }

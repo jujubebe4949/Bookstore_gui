@@ -1,74 +1,76 @@
-Bookstore GUI Application
+# Bookstore GUI Application
 
-Overview
+## Overview
+This project is a **Bookstore Management System** built with Java Swing (GUI) and an embedded Derby database.  
+It follows an **MVC-style architecture**, demonstrating OOP design, database integration, and user-friendly GUI design.
 
-This project is a Bookstore Management System built with Java Swing (GUI) and Derby Embedded Database.
-It follows an MVC-style design and demonstrates object-oriented programming, database integration, and user-friendly GUI design.
+---
 
-Features
-• User Login / Profile
-        • Sign in with name & email (auto-create account if new).
-	• Update profile name.
-	• Logout and re-login supported.
-• Book Management
-	• View all books with cover images.
-	• Search books by title or author.
-	• Check stock availability before adding to cart.
-• Shopping Cart
-	• Add, remove, and adjust quantities.
-	• Validation for stock limits.
-	• Checkout to create an order.
-• Orders
-	• View all previous orders by user.
-	• Double-click to open a receipt dialog.
-	• Order details include items, quantity, and total price.
+## Features
+### User Login / Profile
+- Sign in with name & email (auto-create if new)
+- Update profile name
+- Logout and re-login supported
 
+### Book Management
+- View all books with cover images
+- Search by title or author
+- Check stock before adding to cart
 
-Database
-• Derby Embedded Database (no external server needed).
-• Tables:
-	• Users – stores user accounts.
-	• BookProducts – stores available books.
-	• Orders – stores orders.
-	• OrderItems – stores items for each order.
-• Read and Write operations (3+ each) are implemented across repositories.
+### Shopping Cart
+- Add, remove, and adjust quantities
+- Validate stock limits
+- Checkout to create an order
 
+### Orders
+- View previous orders by user
+- Double-click to open receipt dialog
+- Includes items, quantities, and total
 
-Software Design
-• OOP Principles
-	• Encapsulation, Abstraction, Polymorphism applied.
-• MVC Pattern
-	• Model: BookProduct, Order, User
-	• View: Swing GUI classes
-	• Controller: CartController, UserContext
-• Design Patterns
-	• Singleton: DbManager
-	• Repository Pattern: DbBookRepository, DbOrderRepository, DbUserRepository
+---
 
+## Database
+**Apache Derby (Embedded, auto-created)**  
+Tables:
+- `Users`
+- `BookProducts`
+- `Orders`
+- `OrderItems`
 
-Error Handling
-• Invalid inputs (empty fields, wrong email, invalid quantity) → warning dialogs.
-• Database exceptions → caught and displayed with error messages.
-• GUI supports “Back” navigation and prevents crashes.
+Supports **3+ Read** and **3+ Write** operations.
 
+---
 
-Testing
-• JUnit test cases (5+) included:
-	• CartControllerTest – add/merge items.
-	• DbBookRepositoryTest – CRUD operations on books.
-	• DbUserRepositoryTest – user creation & retrieval.
-	• DbOrderRepositoryTest – create and retrieve orders.
-• All tests validate correctness of database and business logic.
+## Software Design
+- **OOP Principles:** Encapsulation, Abstraction, Polymorphism  
+- **MVC Pattern:**
+  - Model → `BookProduct`, `Order`, `User`
+  - View → Swing GUI
+  - Controller → `CartController`, `UserContext`
+- **Design Patterns:**
+  - Singleton → `DbManager`
+  - Repository → `DbBookRepository`, `DbOrderRepository`, `DbUserRepository`
 
+---
 
-How to Run
-1. Open the project in NetBeans.
-2. Run App.java (main entry point).
-3. Derby DB is initialized automatically (no manual setup).
-4. Use provided sample data to test searching, adding to cart, and ordering.
+## Error Handling
+- Invalid inputs (empty fields, wrong email, invalid quantity)
+- Database exceptions handled gracefully
+- Back navigation and safe error recovery
 
-Author
-• Course Project – Bookstore GUI
-• Java Swing + Derby DB
-• Developed with NetBeans IDE
+---
 
+## Testing
+**JUnit 5 test cases (5+):**
+- `CartControllerTest` – add/merge items
+- `DbBookRepositoryTest` – CRUD on books
+- `DbUserRepositoryTest` – user creation & retrieval
+- `DbOrderRepositoryTest` – order creation/cancel
+- `DbSmokeTest` – DB connection and schema check
+
+---
+
+## How to Run
+```bash
+ant clean jar
+java -jar dist/Bookstore_gui.jar

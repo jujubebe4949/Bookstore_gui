@@ -21,12 +21,23 @@ public class CartController {
     public CartController(BookRepository bookRepo) { this.bookRepo = bookRepo; }
 
     public void add(String id, String title, double price, int qty){
-        if(qty <= 0) throw new IllegalArgumentException("qty > 0 required");
-        Line l = map.get(id);
-        if(l == null) map.put(id, new Line(id, title, price, qty));
-        else l.qty += qty;
-        // ❌ DB 재고 차감 제거: 원자성 보장을 위해 Checkout 트랜잭션에서만 차감
+        
+        if(qty <= 0) throw new IllegalArgumentException("Quantity must be positive.");
+         
+        int stock = bookRepo.getStock(id);
+        
+        if (qty > stock)
+           throw new IllegalStateException("Only " + stock + " item(s) in stock.");
+
+        Line existing = map.get(id);
+        if (existing == null) {
+           map.put(id, new Line(id, title, price, qty));
+           } else {
+                if (existing.qty + qty > stock)
+                    throw new IllegalStateException("Total quantity exceeds available stock.");
+                    existing.qty += qty;
     }
+}
 
     public void remove(String id){ map.remove(id); }
     public void clear(){ map.clear(); }
