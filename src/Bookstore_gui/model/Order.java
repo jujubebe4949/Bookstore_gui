@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Order {
-    // 기존 뷰가 직접 접근: id, createdAt, items, total()
+    //id, createdAt, items, total()
     public final String id;
     public final String userId;
     public final Instant createdAt;
@@ -17,7 +17,7 @@ public class Order {
     public List<Item> getItems() { return items; }
     public double getTotal() { return total(); }
 
-    // 뷰/레포 호환 생성자(지금 리스트로 만드는 기존 코드 지원)
+    
     public Order(String id, String userId, List<Item> items) {
         this(id, userId, Instant.now());
         if (items != null) this.items.addAll(items);
@@ -33,7 +33,7 @@ public class Order {
         return items.stream().mapToDouble(Item::subtotal).sum();
     }
 
-    // 뷰/CartView가 기대하는 필드들(title, qty, subtotal)
+    //CartView: title, qty, subtotal
     public static class Item {
         public final String productId;
         public final String title;

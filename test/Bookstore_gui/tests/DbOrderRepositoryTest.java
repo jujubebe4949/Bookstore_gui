@@ -16,7 +16,7 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 /** Tests for DbOrderRepository: create, query, cancel, rollback. */
-public class DbOrderRepositoryTest {
+public class DbOrderRepositoryTest extends TestBootstrap {
 
     private final DbOrderRepository orders = new DbOrderRepository();
     private final DbUserRepository users = new DbUserRepository();

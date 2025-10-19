@@ -12,6 +12,7 @@ import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.util.List;
+import java.util.stream.Collectors;  
 
 public class BooksView extends JPanel {
     private static final int CARD_W = 180;
@@ -31,7 +32,7 @@ public class BooksView extends JPanel {
         setBorder(BorderFactory.createEmptyBorder(16,16,16,16));
 
         add(errorBanner,BorderLayout.NORTH);
-        
+
         JScrollPane sp = new JScrollPane(grid);
         sp.getVerticalScrollBar().setUnitIncrement(16);
         add(sp, BorderLayout.CENTER);
@@ -39,30 +40,33 @@ public class BooksView extends JPanel {
         addComponentListener(new ComponentAdapter() {
             @Override public void componentResized(ComponentEvent e) { relayoutColumns(); }
         });
-        
-        applyQuery(""); //Load all books initially
+
+        applyQuery(""); 
     }
-    //Always refresh data from repository
+
     public void applyQuery(String q) {
         try {
-            //Empty query = load all books
             if (q == null || q.isBlank()) {
                 shown = repo.findAll();
-            }//Database-backed search if available 
-            else if (repo instanceof Bookstore_gui.db.DbBookRepository dbRepo) {
-                shown = dbRepo.findByTitleLike(q);
             }
-            else { //Fallback: filter in memory             
-                var all = repo.findAll();
+           
+            else if (repo instanceof Bookstore_gui.db.DbBookRepository) {
+                Bookstore_gui.db.DbBookRepository dbRepo = (Bookstore_gui.db.DbBookRepository) repo;
+                shown = dbRepo.findByTitleLike(q);
+            } else {
+                
+                List<BookProduct> all = repo.findAll();
                 String key = q.toLowerCase();
                 shown = all.stream()
                         .filter(b -> safe(b.getName()).contains(key) ||
                                      safe(b.getAuthor()).contains(key))
-                        .toList();
+                        .collect(Collectors.toList());
             }
-            //Show bannerif no results
-            if(shown == null|| shown.isEmpty()){
+
+            if (shown == null || shown.isEmpty()) {
                 errorBanner.showError("No books found for your search.");
+            } else {
+                errorBanner.clear(); 
             }
             rebuildGrid();
         } catch (Exception e) {
@@ -77,14 +81,15 @@ public class BooksView extends JPanel {
         if (shown != null) {
             for (BookProduct b : shown) {
                 String id = b.getId();
-                String imgPath = "/Bookstore_gui/view/common/images/books/" + id + ".jpg";
+                String imgPath = "/Bookstore_gui/images/books/" + id + ".jpg";
                 ImageIcon raw = Resources.icon(imgPath);
                 ImageIcon coverIcon = (raw != null)
                         ? Resources.scale(raw, 160, 240)
-                        : Resources.placeholder(160, 240);
+                        : Resources.placeholder(160, 240);   
 
                 final BookProduct book = b;
                 final ImageIcon fcov = coverIcon;
+
                 BookCard card = new BookCard(book, fcov, CARD_W, CARD_H,
                         () -> showDetails(book, fcov));
                 grid.add(card);
@@ -107,7 +112,7 @@ public class BooksView extends JPanel {
                 SwingUtilities.getWindowAncestor(this),
                 book,
                 icon,
-                repo, 
+                repo,
                 qty -> {
                     cart.add(book.getId(), book.getName(), book.getPrice(), qty);
                     JOptionPane.showMessageDialog(this,

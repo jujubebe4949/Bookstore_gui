@@ -1,7 +1,7 @@
 // File: src/Bookstore_gui/model/BookProduct.java
 package Bookstore_gui.model;
 
-/** KOR: 책 상품. GUI 호환 getter 추가
+/** 
  *  ENG: Book product. Add GUI-friendly getters */
 public class BookProduct extends Product {
     private final String author;

@@ -88,7 +88,7 @@ public class SeedData {
         checkStmt.setString(1, id);
         try (ResultSet rs = checkStmt.executeQuery()) {
             rs.next();
-            if (rs.getInt(1) == 0) { // 데이터 없을 때만 INSERT
+            if (rs.getInt(1) == 0) { 
                 insertStmt.setString(1, id);
                 insertStmt.setString(2, title);
                 insertStmt.setString(3, desc);

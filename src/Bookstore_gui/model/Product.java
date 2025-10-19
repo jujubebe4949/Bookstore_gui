@@ -4,7 +4,6 @@ package Bookstore_gui.model;
 import java.util.Objects;
 
 /**
- * KOR: 간단한 상품 모델(리뷰/Rateable 임시 제외).
  * ENG: Minimal product model (temporarily without Review/Rateable).
  */
 public class Product {
@@ -28,12 +27,12 @@ public class Product {
     public double getPrice() { return price; }
     public int getStock() { return stock; }
 
-    /** KOR: 재고 확인 / ENG: stock check */
+    //ENG: stock check
     public boolean isInStock(int qty) { return qty > 0 && stock >= qty; }
 
-    /** KOR: 재고 차감(안전) / ENG: safe stock deduction */
+    // ENG: safe stock deduction 
     public boolean reduceStock(int qty) {
-        if (qty <= 0 || stock < qty) return false; // why: 음수/과차감 방지
+        if (qty <= 0 || stock < qty) return false; 
         stock -= qty;
         return true;
     }

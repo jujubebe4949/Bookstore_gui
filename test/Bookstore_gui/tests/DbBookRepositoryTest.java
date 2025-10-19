@@ -12,7 +12,7 @@ import java.sql.PreparedStatement;
 
 import static org.junit.Assert.*;
 
-public class DbBookRepositoryTest {
+public class DbBookRepositoryTest extends TestBootstrap{
 
     private final DbBookRepository repo = new DbBookRepository();
     private static final String ID = "T999";

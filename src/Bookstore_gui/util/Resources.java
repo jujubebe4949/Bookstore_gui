@@ -1,4 +1,4 @@
-// File: src/Bookstore_gui/util/Resources.java
+// Bookstore_gui.util.Resources
 package Bookstore_gui.util;
 
 import javax.swing.*;
@@ -16,42 +16,39 @@ public final class Resources {
         return (url != null) ? new ImageIcon(url) : null;
     }
 
-    public static ImageIcon scale(ImageIcon raw, int w, int h) {
-        if (raw == null) return null;
-        Image img = raw.getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH);
-        return new ImageIcon(img);
-    }
-
-    public static ImageIcon placeholder(int w, int h) {
-        BufferedImage img = new BufferedImage(Math.max(1,w), Math.max(1,h), BufferedImage.TYPE_INT_RGB);
-        Graphics2D g = img.createGraphics();
-        g.setColor(new Color(245,245,245)); g.fillRect(0,0,w,h);
-        g.setColor(new Color(200,200,200)); g.drawRect(0,0,w-1,h-1);
-        g.setColor(new Color(150,150,150)); g.drawString("No Image", 8, 16);
-        g.dispose();
-        return new ImageIcon(img);
-    }
-
-    // --- NEW: 엄격 로더 (ImageIO로 진짜 디코딩) ---
     public static ImageIcon iconStrict(String classpath) {
         try {
             URL url = Resources.class.getResource(classpath);
-            System.out.println("[RES] strict load " + classpath + " url=" + url);
-            if (url == null) return null;
-            BufferedImage bi = ImageIO.read(url); // 디코딩 실패 시 null
-            if (bi == null) {
-                System.out.println("[RES] ImageIO.read returned null for " + classpath);
-                return null;
-            }
-            return new ImageIcon(bi);
+            if (url == null) throw new IllegalArgumentException("not found: " + classpath);
+            Image img = ImageIO.read(url);
+            if (img == null) throw new IllegalStateException("ImageIO.read returned null for " + classpath);
+            return new ImageIcon(img);
         } catch (Exception ex) {
             System.out.println("[RES] strict load error " + classpath + " -> " + ex);
             return null;
         }
     }
-        public static ImageIcon image(String classpath, int w, int h) {
-        ImageIcon raw = iconStrict(classpath); // why: 손상/포맷문제 잡으려고 엄격 로더 사용
-        if (raw == null) return null;
-        return scale(raw, w, h);
+
+    public static ImageIcon scale(ImageIcon src, int w, int h) {
+        if (src == null) return null;
+        Image scaled = src.getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH);
+        return new ImageIcon(scaled);
+    }
+
+    public static ImageIcon placeholder(int w, int h) {
+        BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = img.createGraphics();
+        g.setColor(new Color(230,230,230));
+        g.fillRect(0,0,w,h);
+        g.setColor(new Color(160,160,160));
+        g.drawRect(0,0,w-1,h-1);
+        g.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        String s = "No Image";
+        FontMetrics fm = g.getFontMetrics();
+        int tx = (w - fm.stringWidth(s))/2;
+        int ty = (h - fm.getHeight())/2 + fm.getAscent();
+        g.drawString(s, tx, ty);
+        g.dispose();
+        return new ImageIcon(img);
     }
 }

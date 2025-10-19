@@ -4,6 +4,7 @@
  */
 package Bookstore_gui.view;
 
+import Bookstore_gui.view.common.BackgroundPanel;
 import Bookstore_gui.controller.CartController;
 import Bookstore_gui.controller.UserContext;
 import Bookstore_gui.db.*;

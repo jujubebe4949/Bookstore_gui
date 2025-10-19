@@ -30,14 +30,12 @@ public class DbOrderRepository implements OrderRepository {
             boolean oldAuto = c.getAutoCommit();
             c.setAutoCommit(false);
             try {
-                // 1️⃣ Insert order header
                 try (PreparedStatement ps = c.prepareStatement(insOrder)) {
                     ps.setString(1, orderId);
                     ps.setString(2, userId);
                     ps.executeUpdate();
                 }
 
-                // 2️⃣ Insert items + stock update
                 for (Order.Item it : items) {
                     int stock = 0;
                     try (PreparedStatement ps = c.prepareStatement(selStock)) {

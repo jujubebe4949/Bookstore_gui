@@ -4,6 +4,7 @@
  */
 package Bookstore_gui.view;
 
+import Bookstore_gui.view.common.BackgroundPanel;
 import Bookstore_gui.controller.UserContext;
 import Bookstore_gui.db.DbUserRepository;
 import Bookstore_gui.repo.UserRepository;
@@ -46,7 +47,7 @@ public class StartFrame extends javax.swing.JFrame {
     setSize(1100, 620);
     setLocationRelativeTo(null);
 
-    // 4) 입력칸 폭, 탭 제목 등 스타일
+    
     txtInName.setColumns(25);
     pwdIn.setColumns(22);
     txtUpName.setColumns(22);
@@ -192,7 +193,7 @@ private static String safe(JTextField f) {
         authCard.setBackground(new java.awt.Color(255, 255, 255));
         authCard.setLayout(new java.awt.BorderLayout());
 
-        tabAuth.setBackground(java.awt.Color.white);
+        tabAuth.setBackground(java.awt.Color.pink);
         tabAuth.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
         tabAuth.setToolTipText("");
         tabAuth.setName(""); // NOI18N
@@ -230,7 +231,7 @@ private static String safe(JTextField f) {
                         .addGroup(signInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(txtInName, javax.swing.GroupLayout.PREFERRED_SIZE, 185, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(pwdIn, javax.swing.GroupLayout.PREFERRED_SIZE, 185, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addContainerGap(110, Short.MAX_VALUE))
+                .addContainerGap(98, Short.MAX_VALUE))
         );
         signInPanelLayout.setVerticalGroup(
             signInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -242,7 +243,7 @@ private static String safe(JTextField f) {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(signInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(signInPanelLayout.createSequentialGroup()
-                        .addComponent(jLabel5, javax.swing.GroupLayout.DEFAULT_SIZE, 38, Short.MAX_VALUE)
+                        .addComponent(jLabel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addGap(18, 18, 18)
                         .addComponent(lblErrorIn)
                         .addGap(24, 24, 24))

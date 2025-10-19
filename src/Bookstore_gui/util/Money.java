@@ -1,6 +1,5 @@
 // =============================
 // File: src/Bookstore_gui/util/Money.java
-// 통일된 가격 포맷(이미 있다면 스킵)
 // =============================
 package Bookstore_gui.util;
 

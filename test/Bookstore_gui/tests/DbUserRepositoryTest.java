@@ -14,7 +14,7 @@ import java.sql.ResultSet;
 import static org.junit.Assert.*;
 
 /** Tests for DbUserRepository: idempotent findOrCreate and name update. */
-public class DbUserRepositoryTest {
+public class DbUserRepositoryTest extends TestBootstrap{
 
     private final DbUserRepository users = new DbUserRepository();
     private static final String EMAIL = "unittest@example.com";

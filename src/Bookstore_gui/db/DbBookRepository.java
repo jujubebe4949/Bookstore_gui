@@ -9,18 +9,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * JDBC implementation for books with safe resource handling.
- * - Case-insensitive search
- * - Atomic stock updates with negative-stock prevention
- */
+ 
 public class DbBookRepository implements BookRepository {
 
     public DbBookRepository() {
         try { DbManager.initSchema(); } catch (Exception ignored) {}
     }
-
-    // ---- Basic CRUD ----
 
     @Override
     public List<BookProduct> findAll() {
