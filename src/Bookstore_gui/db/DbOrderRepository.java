@@ -1,4 +1,4 @@
-// ✅ Fixed version of DbOrderRepository
+// path: src/Bookstore_gui/db/DbOrderRepository.java
 package Bookstore_gui.db;
 
 import Bookstore_gui.model.Order;
@@ -30,12 +30,14 @@ public class DbOrderRepository implements OrderRepository {
             boolean oldAuto = c.getAutoCommit();
             c.setAutoCommit(false);
             try {
+                // create order header
                 try (PreparedStatement ps = c.prepareStatement(insOrder)) {
                     ps.setString(1, orderId);
                     ps.setString(2, userId);
                     ps.executeUpdate();
                 }
 
+                // each line: check stock -> decrement -> insert line
                 for (Order.Item it : items) {
                     int stock = 0;
                     try (PreparedStatement ps = c.prepareStatement(selStock)) {
@@ -44,8 +46,9 @@ public class DbOrderRepository implements OrderRepository {
                             if (rs.next()) stock = rs.getInt(1);
                         }
                     }
-                    if (stock < it.qty)
+                    if (stock < it.qty) {
                         throw new IllegalStateException("Insufficient stock for " + it.productId);
+                    }
 
                     try (PreparedStatement ps = c.prepareStatement(updStock)) {
                         ps.setInt(1, it.qty);
@@ -86,8 +89,7 @@ public class DbOrderRepository implements OrderRepository {
             while (rs.next()) {
                 String id = rs.getString("id");
                 String uid = rs.getString("userId");
-                var created = rs.getTimestamp("created").toInstant()
-                        .atZone(ZoneId.systemDefault()).toInstant();
+                var created = rs.getTimestamp("created").toInstant(); // Instant
                 Order o = new Order(id, uid, created);
                 o.getItems().addAll(loadItems(c, id));
                 list.add(o);
@@ -108,8 +110,7 @@ public class DbOrderRepository implements OrderRepository {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     String id = rs.getString("id");
-                    var created = rs.getTimestamp("created").toInstant()
-                            .atZone(ZoneId.systemDefault()).toInstant();
+                    var created = rs.getTimestamp("created").toInstant(); // Instant
                     Order o = new Order(id, userId, created);
                     o.getItems().addAll(loadItems(c, id));
                     list.add(o);
@@ -140,6 +141,7 @@ public class DbOrderRepository implements OrderRepository {
         return items;
     }
 
+    /** Cancels order in a transaction. (재고 복구가 필요하면 여기서 되돌리는 로직을 추가하세요) */
     public boolean cancelOrder(String orderId) {
         String delItems = "DELETE FROM OrderItems WHERE orderId=?";
         String delOrder = "DELETE FROM Orders WHERE id=?";

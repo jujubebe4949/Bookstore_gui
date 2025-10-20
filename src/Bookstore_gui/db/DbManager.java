@@ -9,10 +9,9 @@ public final class DbManager {
     private static final String PW   = "app";
 
     private static Connection conn;
-    private DbManager(){}
+    private DbManager() {}
 
     public static synchronized Connection connect() throws SQLException {
-        // explicit driver boot for stability
         try { Class.forName("org.apache.derby.jdbc.EmbeddedDriver"); } catch (ClassNotFoundException ignore) {}
         if (conn == null || conn.isClosed()) {
             conn = DriverManager.getConnection(URL, USER, PW);
@@ -61,33 +60,83 @@ public final class DbManager {
             PRIMARY KEY(orderId, productId)
           )
         """);
+
         ensureUserAuthColumns();
+        ensureNameLowerInfrastructure();  
         try { SeedData.insertSampleBooks(); } catch (Exception ignore) {}
     }
 
     private static void execIgnoreExists(String ddl) throws SQLException {
-        try (Statement st = connect().createStatement()) { st.executeUpdate(ddl); }
-        catch (SQLException e) { if (!"X0Y32".equals(e.getSQLState())) throw e; }
+        try (Statement st = connect().createStatement()) {
+            st.executeUpdate(ddl);
+        } catch (SQLException e) {
+            if (!"X0Y32".equals(e.getSQLState())) throw e;
+        }
     }
 
     private static void ensureUserAuthColumns() throws SQLException {
-        if (!columnExists("USERS","PASSWORD_SALT")) {
+        if (!columnExists("USERS", "PASSWORD_SALT")) {
             try (Statement s = connect().createStatement()) {
                 s.executeUpdate("ALTER TABLE Users ADD COLUMN password_salt VARCHAR(64)");
             }
         }
-        if (!columnExists("USERS","PASSWORD_HASH")) {
+        if (!columnExists("USERS", "PASSWORD_HASH")) {
             try (Statement s = connect().createStatement()) {
                 s.executeUpdate("ALTER TABLE Users ADD COLUMN password_hash VARCHAR(64)");
             }
         }
     }
 
+    private static void ensureNameLowerInfrastructure() throws SQLException {
+        
+        if (!columnExists("USERS", "NAME_LOWER")) {
+            try (Statement s = connect().createStatement()) {
+                s.executeUpdate("ALTER TABLE Users ADD COLUMN name_lower VARCHAR(50)");
+            }
+            try (Statement s = connect().createStatement()) {
+                s.executeUpdate("UPDATE Users SET name_lower = LOWER(name) WHERE name IS NOT NULL");
+            }
+        }
+
+        // 2) BEFORE INSERT/UPDATE 
+        execIgnoreExistsAny("""
+          CREATE TRIGGER trg_users_name_bi
+          NO CASCADE BEFORE INSERT ON Users
+          REFERENCING NEW AS n
+          FOR EACH ROW MODE DB2SQL
+          SET n.name_lower = LOWER(n.name)
+        """);
+
+        execIgnoreExistsAny("""
+          CREATE TRIGGER trg_users_name_bu
+          NO CASCADE BEFORE UPDATE OF name ON Users
+          REFERENCING NEW AS n
+          FOR EACH ROW MODE DB2SQL
+          SET n.name_lower = LOWER(n.name)
+        """);
+
+        // 3) UNIQUE 
+        execIgnoreExistsAny("""
+          CREATE UNIQUE INDEX ux_users_name_lower ON Users(name_lower)
+        """);
+    }
+
+    private static void execIgnoreExistsAny(String ddl) throws SQLException {
+        try (Statement st = connect().createStatement()) {
+            st.executeUpdate(ddl);
+        } catch (SQLException e) {
+            String state = e.getSQLState();
+            String msg = (e.getMessage() == null ? "" : e.getMessage()).toUpperCase();
+            if ("X0Y32".equals(state) || "X0Y68".equals(state) || msg.contains("ALREADY EXISTS")) return;
+            throw e;
+        }
+    }
+
     private static boolean columnExists(String tbl, String col) throws SQLException {
         String q = """
             SELECT 1 FROM SYS.SYSCOLUMNS c
-              JOIN SYS.SYSTABLES t ON c.REFERENCEID=t.TABLEID
-             WHERE UPPER(t.TABLENAME)=? AND UPPER(c.COLUMNNAME)=?
+              JOIN SYS.SYSTABLES t ON c.REFERENCEID = t.TABLEID
+             WHERE UPPER(t.TABLENAME) = ? AND UPPER(c.COLUMNNAME) = ?
         """;
         try (PreparedStatement ps = connect().prepareStatement(q)) {
             ps.setString(1, tbl);

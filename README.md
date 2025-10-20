@@ -8,8 +8,10 @@ It follows an **MVC-style architecture**, demonstrating OOP design, database int
 
 ## Features
 ### User Login / Profile
-- Sign in with name & email (auto-create if new)
-- Update profile name
+- Sign in with name & password
+- Register with name, email, and password
+- Update display name
+- Secure password storage with salt & hash
 - Logout and re-login supported
 
 ### Book Management

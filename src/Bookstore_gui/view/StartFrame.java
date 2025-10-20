@@ -63,16 +63,15 @@ public class StartFrame extends javax.swing.JFrame {
     
     getRootPane().setDefaultButton(btnEnter);
     btnEnter.addActionListener(e -> {
-        lblErrorIn.setText("");
-        lblErrorUp.setText("");
-        if (tabAuth.getSelectedComponent() == signInPanel) {
-            signIn();
-        } else {
-            signUp();
-        }
-    });
+    if (tabAuth.getSelectedComponent() == signInPanel) {
+        signIn();
+    } else {
+        signUp();
+    }
+});
 }
     private void signIn() {
+      lblErrorIn.setText(""); 
       String name = safe(txtInName).toLowerCase();
       String pw    = new String(pwdIn.getPassword());
       if (name.isBlank() || pw.isBlank()) {
@@ -86,7 +85,7 @@ public class StartFrame extends javax.swing.JFrame {
             lblErrorIn.setText("Name or password is incorrect.");
             return;
         }
-        userCtx.setUser(uid, null, name);
+        userCtx.setUser(uid, name, null);
         goMain();
     } catch (Exception ex) {
         String msg = String.valueOf(ex.getMessage());
@@ -99,31 +98,51 @@ public class StartFrame extends javax.swing.JFrame {
 }
 
 private void signUp() {
+    lblErrorUp.setText("");
+
     String name  = safe(txtUpName);
     String email = safe(txtUpEmail).toLowerCase();
     String pw    = new String(pwdUp.getPassword());
+
     if (name.isBlank() || email.isBlank() || pw.isBlank()) {
         lblErrorUp.setText("All fields are required.");
         return;
     }
+    
     if (pw.length() < 4) {
-        lblErrorUp.setText("Password must be at least 4 characters.");
+        lblErrorUp.setText("Password must be at least 6 characters.");
         return;
     }
+
     try {
         DbUserRepository users = new DbUserRepository();
+
+        if (users.findByEmail(email) != null) {
+            lblErrorUp.setText("This email is already registered. Please Sign In.");
+            return;
+        }
+
         String uid = users.register(name, email, pw);
+
+        if (uid == null || uid.isBlank()) {
+            lblErrorUp.setText("Sign up failed: invalid user id.");
+            return;
+        }
+
         userCtx.setUser(uid, name, email);
         goMain();
     } catch (Exception ex) {
         String msg = ex.getMessage() == null ? "" : ex.getMessage();
         if (msg.contains("XSDB6")) {
             lblErrorUp.setText("Database is locked by another run. Close other windows and try again.");
-        } else if (msg.contains("23505")) {
+        } else if (msg.contains("23505") || msg.toLowerCase().contains("already registered")) {
             lblErrorUp.setText("This email is already registered. Please Sign In.");
+        } else if (msg.toLowerCase().contains("name already taken")) {
+            lblErrorUp.setText("This name is already taken. Choose another name.");
         } else {
             lblErrorUp.setText("Sign up failed: " + msg);
         }
+        return; 
     }
 }
 
