@@ -10,6 +10,7 @@ package Bookstore_gui.util;
  */
 import java.util.regex.Pattern;
 
+/** Utility for validating email address format. */
 public class EmailValidator {
     private static final Pattern EMAIL =
             Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");

@@ -6,10 +6,11 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 
+/** Utility class for custom table and list cell renderers. */
 public final class Renderers {
     private Renderers(){}
 
-    /** KOR: 가격 우측정렬+통화 / ENG: right-aligned currency */
+    //right-aligned currency 
     public static class PriceRenderer extends DefaultTableCellRenderer {
         @Override protected void setValue(Object v) {
             setHorizontalAlignment(SwingConstants.RIGHT);
@@ -18,7 +19,7 @@ public final class Renderers {
         }
     }
 
-    /** KOR: 재고 배지 / ENG: stock badge */
+    //stock badge
     public static class StockRenderer extends DefaultTableCellRenderer {
         @Override protected void setValue(Object v) {
             setHorizontalAlignment(SwingConstants.CENTER);
@@ -29,7 +30,7 @@ public final class Renderers {
         }
     }
 
-    /** KOR: 썸네일(Icon) / ENG: thumbnail icon */
+    //thumbnail icon 
     public static class ThumbRenderer extends DefaultTableCellRenderer {
         @Override public void setValue(Object v) {
             setHorizontalAlignment(SwingConstants.CENTER);

@@ -4,7 +4,7 @@ package Bookstore_gui.model;
 import java.util.Objects;
 
 /**
- * ENG: Minimal product model (temporarily without Review/Rateable).
+ *Minimal product model (temporarily without Review/Rateable).
  */
 public class Product {
     private final String id;
@@ -27,10 +27,10 @@ public class Product {
     public double getPrice() { return price; }
     public int getStock() { return stock; }
 
-    //ENG: stock check
+    //stock check
     public boolean isInStock(int qty) { return qty > 0 && stock >= qty; }
 
-    // ENG: safe stock deduction 
+    // safe stock deduction 
     public boolean reduceStock(int qty) {
         if (qty <= 0 || stock < qty) return false; 
         stock -= qty;

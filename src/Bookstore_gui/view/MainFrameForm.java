@@ -17,10 +17,9 @@ import javax.swing.*;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.awt.*;
-/**
- *
- * @author julia
- */
+
+
+/** Main application window managing all views (Books, Cart, Orders). */
 public class MainFrameForm extends javax.swing.JFrame {
     // ---- state / services ----
     private final UserContext userCtx;

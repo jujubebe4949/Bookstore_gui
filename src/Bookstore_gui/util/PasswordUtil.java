@@ -5,6 +5,7 @@ import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.HexFormat;
 
+/** Utility for password hashing and salt generation (security helper). */
 public final class PasswordUtil {
     private static final SecureRandom RND = new SecureRandom();
     private PasswordUtil(){}

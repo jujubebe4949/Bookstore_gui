@@ -11,11 +11,21 @@ public class Order {
     public final Instant createdAt;
     public final List<Item> items = new ArrayList<>();
     
-    public String getId() { return id; }
-    public String getUserId() { return userId; }
-    public Instant getCreatedAt() { return createdAt; }
-    public List<Item> getItems() { return items; }
-    public double getTotal() { return total(); }
+    public String getId() { 
+        return id; 
+    }
+    public String getUserId() {
+        return userId; 
+    }
+    public Instant getCreatedAt() {
+        return createdAt; 
+    }
+    public List<Item> getItems() { 
+        return items; 
+    }
+    public double getTotal() {
+        return total(); 
+    }
 
     
     public Order(String id, String userId, List<Item> items) {

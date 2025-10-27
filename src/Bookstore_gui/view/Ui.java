@@ -6,8 +6,8 @@ import java.awt.*;
 
 // package Bookstore_gui.view;
 public final class Ui {
-    private Ui(){}
-
+    private Ui(){
+    }
     public static final Color BG_DIM = new Color(245,245,248);
     public static final Color ACCENT = new Color(40, 91, 140);
     public static final Font  H1 = new JLabel().getFont().deriveFont(Font.BOLD, 18f);

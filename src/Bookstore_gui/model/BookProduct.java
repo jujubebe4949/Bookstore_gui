@@ -2,7 +2,8 @@
 package Bookstore_gui.model;
 
 /** 
- *  ENG: Book product. Add GUI-friendly getters */
+ * Book product. Add GUI-friendly getters 
+ */
 public class BookProduct extends Product {
     private final String author;
 

@@ -6,6 +6,7 @@ import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
 import java.net.URL;
 
+/** Panel for rendering a static background image for the main frame. */
 public class BackgroundPanel extends JPanel {
     private BufferedImage img;
 

@@ -3,6 +3,7 @@ package Bookstore_gui.view.common;
 import javax.swing.*;
 import java.awt.*;
 
+/** Common banner for displaying error or status messages. */
 public class ErrorBanner extends JPanel {
     private final JLabel label = new JLabel();
 

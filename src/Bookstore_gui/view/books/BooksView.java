@@ -14,6 +14,7 @@ import java.awt.event.ComponentEvent;
 import java.util.List;
 import java.util.stream.Collectors;  
 
+/** Main panel displaying the list of books with search and filter options. */
 public class BooksView extends JPanel {
     private static final int CARD_W = 180;
     private static final int CARD_H = 300;

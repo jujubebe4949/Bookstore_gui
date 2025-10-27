@@ -4,6 +4,7 @@ import Bookstore_gui.model.Order;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/** In-memory implementation of OrderRepository for testing or demo use. */
 public class InMemoryOrderRepository implements OrderRepository {
     private final List<Order> orders = new ArrayList<>();
 

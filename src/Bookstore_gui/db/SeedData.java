@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+/** Loads initial seed data (users, books, orders) into the database. */
 public class SeedData {
 
     public static void insertSampleBooks() throws SQLException {

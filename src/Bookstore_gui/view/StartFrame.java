@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
 package Bookstore_gui.view;
 
 import Bookstore_gui.view.common.BackgroundPanel;
@@ -11,153 +7,162 @@ import Bookstore_gui.repo.UserRepository;
 
 import javax.swing.*;
 import java.awt.*;
+
 /**
- *
- * @author julia
+ * StartFrame – Entry point for login and sign-up
+ * Handles user authentication and redirects to MainFrameForm.
+ * @author Julia
  */
 public class StartFrame extends javax.swing.JFrame {
-    // Application state
+
     private final UserRepository users = new DbUserRepository();
     private final UserContext userCtx = new UserContext();
 
     public StartFrame() {
-    setContentPane(new BackgroundPanel("/Bookstore_gui/view/common/mainimage.jpg"));
-    initComponents();
-    
-    authCard.remove(southBar); 
-    authCard.add(southBar, java.awt.BorderLayout.PAGE_END);
+        setContentPane(new BackgroundPanel("/Bookstore_gui/view/common/mainimage.jpg"));
+        initComponents();
 
-    lblErrorIn.setText("");
-    lblErrorUp.setText("");
-    
-    authCard.remove(tabAuth);
-    authCard.add(tabAuth, java.awt.BorderLayout.CENTER);
+        // Align components properly in layout
+        authCard.remove(southBar);
+        authCard.add(southBar, java.awt.BorderLayout.PAGE_END);
+        authCard.remove(tabAuth);
+        authCard.add(tabAuth, java.awt.BorderLayout.CENTER);
 
-    
-    java.awt.FlowLayout fl = (java.awt.FlowLayout) southBar.getLayout();
-    fl.setAlignment(java.awt.FlowLayout.RIGHT);
+        // Reset error labels
+        lblErrorIn.setText("");
+        lblErrorUp.setText("");
 
-    authCard.revalidate();
-    authCard.repaint();
-    
-    
-    setTitle("Bookstore");
-    setDefaultCloseOperation(EXIT_ON_CLOSE);
-    setResizable(false);
-    setSize(1100, 620);
-    setLocationRelativeTo(null);
+        // Frame properties
+        setTitle("Bookstore");
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setResizable(false);
+        setSize(1100, 620);
+        setLocationRelativeTo(null);
 
-    
-    txtInName.setColumns(25);
-    pwdIn.setColumns(22);
-    txtUpName.setColumns(22);
-    txtUpEmail.setColumns(22);
-    pwdUp.setColumns(22);
+        // Input field setup
+        txtInName.setColumns(25);
+        pwdIn.setColumns(22);
+        txtUpName.setColumns(22);
+        txtUpEmail.setColumns(22);
+        pwdUp.setColumns(22);
 
-    int inIdx = tabAuth.indexOfComponent(signInPanel);
-    int upIdx = tabAuth.indexOfComponent(signUpPanel);
-    if (inIdx >= 0) tabAuth.setTitleAt(inIdx, "Sign In");
-    if (upIdx >= 0) tabAuth.setTitleAt(upIdx, "Sign Up");
+        // Tab labels
+        int inIdx = tabAuth.indexOfComponent(signInPanel);
+        int upIdx = tabAuth.indexOfComponent(signUpPanel);
+        if (inIdx >= 0) tabAuth.setTitleAt(inIdx, "Sign In");
+        if (upIdx >= 0) tabAuth.setTitleAt(upIdx, "Sign Up");
 
-
-    
-    getRootPane().setDefaultButton(btnEnter);
-    btnEnter.addActionListener(e -> {
-    if (tabAuth.getSelectedComponent() == signInPanel) {
-        signIn();
-    } else {
-        signUp();
+        // Single Action Listener for "Enter" button
+        for (var al : btnEnter.getActionListeners()) {
+            btnEnter.removeActionListener(al);
+        }
+        getRootPane().setDefaultButton(btnEnter);
+        btnEnter.addActionListener(e -> {
+            lblErrorIn.setText("");
+            lblErrorUp.setText("");
+            if (tabAuth.getSelectedComponent() == signInPanel) {
+                signIn();
+            } else {
+                signUp();
+            }
+        });
     }
-});
-}
+
+    /** Handles user sign-in by name and password */
     private void signIn() {
-      lblErrorIn.setText(""); 
-      String name = safe(txtInName).toLowerCase();
-      String pw    = new String(pwdIn.getPassword());
-      if (name.isBlank() || pw.isBlank()) {
-          lblErrorIn.setText("Enter name and password.");
-          return;
-      }
-    try {
-        DbUserRepository users = new DbUserRepository();
-        String uid = users.authenticateByName(name, pw);
-        if (uid == null) {
-            lblErrorIn.setText("Name or password is incorrect.");
-            return;
-        }
-        userCtx.setUser(uid, name, null);
-        goMain();
-    } catch (Exception ex) {
-        String msg = String.valueOf(ex.getMessage());
-        if (msg.contains("XSDB6")) {
-            lblErrorIn.setText("Database is locked by another run. Close other windows and try again.");
-        } else {
-            lblErrorIn.setText("Login failed: " + msg);
-        }
-    }
-}
+        lblErrorIn.setText("");
+        String name = safe(txtInName).toLowerCase();
+        String pw = new String(pwdIn.getPassword());
 
-private void signUp() {
-    lblErrorUp.setText("");
-
-    String name  = safe(txtUpName);
-    String email = safe(txtUpEmail).toLowerCase();
-    String pw    = new String(pwdUp.getPassword());
-
-    if (name.isBlank() || email.isBlank() || pw.isBlank()) {
-        lblErrorUp.setText("All fields are required.");
-        return;
-    }
-    
-    if (pw.length() < 4) {
-        lblErrorUp.setText("Password must be at least 6 characters.");
-        return;
-    }
-
-    try {
-        DbUserRepository users = new DbUserRepository();
-
-        if (users.findByEmail(email) != null) {
-            lblErrorUp.setText("This email is already registered. Please Sign In.");
+        if (name.isBlank() || pw.isBlank()) {
+            lblErrorIn.setText("Enter name and password.");
             return;
         }
 
-        String uid = users.register(name, email, pw);
+        try {
+            DbUserRepository repo = new DbUserRepository();
+            String uid = repo.authenticateByName(name, pw);
+            if (uid == null) {
+                lblErrorIn.setText("Name or password is incorrect.");
+                return;
+            }
+            userCtx.setUser(uid, name, null);
+            goMain();
+        } catch (Exception ex) {
+            String msg = String.valueOf(ex.getMessage());
+            if (msg.contains("XSDB6")) {
+                lblErrorIn.setText("Database is locked by another run. Close other windows and try again.");
+            } else {
+                lblErrorIn.setText("Login failed: " + msg);
+            }
+        }
+    }
 
-        if (uid == null || uid.isBlank()) {
-            lblErrorUp.setText("Sign up failed: invalid user id.");
+    /** Handles user sign-up with name, email, and password */
+    private void signUp() {
+        lblErrorUp.setText("");
+
+        String name = safe(txtUpName);
+        String email = safe(txtUpEmail).toLowerCase();
+        String pw = new String(pwdUp.getPassword());
+
+        // Simple validation
+        if (name.isBlank() || email.isBlank() || pw.isBlank()) {
+            return; // silent fail
+        }
+
+        if (pw.length() < 4) {
+            lblErrorUp.setText("Password must be at least 4 characters.");
             return;
         }
 
-        userCtx.setUser(uid, name, email);
-        goMain();
-    } catch (Exception ex) {
-        String msg = ex.getMessage() == null ? "" : ex.getMessage();
-        if (msg.contains("XSDB6")) {
-            lblErrorUp.setText("Database is locked by another run. Close other windows and try again.");
-        } else if (msg.contains("23505") || msg.toLowerCase().contains("already registered")) {
-            lblErrorUp.setText("This email is already registered. Please Sign In.");
-        } else if (msg.toLowerCase().contains("name already taken")) {
-            lblErrorUp.setText("This name is already taken. Choose another name.");
-        } else {
-            lblErrorUp.setText("Sign up failed: " + msg);
-        }
-        return; 
-    }
-}
+        try {
+            DbUserRepository repo = new DbUserRepository();
 
-private void goMain() {
+            // Check if email already exists
+            if (repo.findByEmail(email) != null) {
+                lblErrorUp.setText("This email is already registered. Please Sign In.");
+                return;
+            }
+
+            // Register new user
+            String uid = repo.register(name, email, pw);
+            if (uid == null || uid.isBlank()) {
+                lblErrorUp.setText("Sign up failed: invalid user id.");
+                return;
+            }
+
+            // Success: set user context and go to main frame
+            userCtx.setUser(uid, name, email);
+            goMain();
+
+        } catch (Exception ex) {
+            String msg = ex.getMessage() == null ? "" : ex.getMessage();
+            String low = msg.toLowerCase();
+            if (msg.contains("XSDB6")) {
+                lblErrorUp.setText("Database is locked by another run. Close other windows and try again.");
+            } else if (msg.contains("23505") || low.contains("already registered")) {
+                lblErrorUp.setText("This email is already registered. Please Sign In.");
+            } else if (low.contains("name already taken")) {
+                lblErrorUp.setText("This name is already taken. Choose another name.");
+            } else {
+                lblErrorUp.setText("Sign up failed: " + msg);
+            }
+        }
+    }
+
+    /** Launch main application window after login/signup success */
+    private void goMain() {
         SwingUtilities.invokeLater(() -> {
             new MainFrameForm(userCtx).setVisible(true);
             dispose();
         });
     }
 
-
-private static String safe(JTextField f) {
-    return f.getText() == null ? "" : f.getText().trim();
-}
-   
+    /** Helper method: safely trim text */
+    private static String safe(JTextField f) {
+        return f.getText() == null ? "" : f.getText().trim();
+    }
 
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents

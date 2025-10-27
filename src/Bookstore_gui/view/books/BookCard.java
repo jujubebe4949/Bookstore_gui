@@ -7,6 +7,7 @@ import Bookstore_gui.util.Money;
 import javax.swing.*;
 import java.awt.*;
 
+/** UI component for displaying a single book card in the list view. */
 public class BookCard extends JPanel {
     public BookCard(BookProduct b, ImageIcon cover, int w, int h, Runnable onClick) {
         setPreferredSize(new Dimension(w, h));

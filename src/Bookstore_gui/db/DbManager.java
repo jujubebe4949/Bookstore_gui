@@ -3,6 +3,7 @@ package Bookstore_gui.db;
 
 import java.sql.*;
 
+/** Manages database connections and schema initialization (Singleton). */
 public final class DbManager {
     private static final String URL  = "jdbc:derby:BookStoreDB;create=true";
     private static final String USER = "app";

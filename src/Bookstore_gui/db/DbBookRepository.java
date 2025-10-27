@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
- 
+/** Derby implementation of BookRepository for BookProduct CRUD and stock handling. */ 
 public class DbBookRepository implements BookRepository {
 
     public DbBookRepository() {
