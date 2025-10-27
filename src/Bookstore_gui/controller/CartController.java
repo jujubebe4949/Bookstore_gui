@@ -39,8 +39,16 @@ public class CartController {
     }
 }
 
-    public void remove(String id){ map.remove(id); }
-    public void clear(){ map.clear(); }
-    public List<Line> lines(){ return new ArrayList<>(map.values()); }
-    public double total(){ return map.values().stream().mapToDouble(Line::subtotal).sum(); }
+    public void remove(String id){ 
+        map.remove(id); 
+    }
+    public void clear(){
+        map.clear(); 
+    }
+    public List<Line> lines(){
+        return new ArrayList<>(map.values());
+    }
+    public double total(){ 
+        return map.values().stream().mapToDouble(Line::subtotal).sum(); 
+    }
 }

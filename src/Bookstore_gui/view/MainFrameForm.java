@@ -156,7 +156,11 @@ public class MainFrameForm extends javax.swing.JFrame {
             contentPanel.add(ordersView, "ORDERS");
 
             // nav
-            addNavClick(navBooks,  () -> card.show(contentPanel, "BOOKS"));
+            addNavClick(navBooks, () -> {
+                if (search != null) search.setText("");
+                booksView.applyQuery("");             //reload
+                card.show(contentPanel, "BOOKS");    
+});
             addNavClick(navCart,   () -> { cartView.refresh();   card.show(contentPanel, "CART"); });
             addNavClick(navOrders, () -> { ordersView.refresh(); card.show(contentPanel, "ORDERS"); });
             card.show(contentPanel, "BOOKS");
@@ -193,31 +197,38 @@ public class MainFrameForm extends javax.swing.JFrame {
 
         refreshUserLabel();
         card.show(contentPanel, "BOOKS");
+        btnSearch.addActionListener(e -> doSearch());
+        search.addActionListener(e -> doSearch());
     }
 
-    private void addNavClick(JComponent c, Runnable action) {
-        if (c == null) return;
-        c.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        c.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override public void mouseClicked(java.awt.event.MouseEvent e) { action.run(); }
-        });
-    }
+        private void doSearch() {
+            String q = (search.getText() == null) ? "" : search.getText().trim();
+            booksView.applyQuery(q);               // BooksView가 내부에서 findByTitleLike 처리
+            card.show(contentPanel, "BOOKS");      // 결과는 Books 탭으로 보여주기
+        }
+        private void addNavClick(JComponent c, Runnable action) {
+            if (c == null) return;
+            c.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            c.addMouseListener(new java.awt.event.MouseAdapter() {
+                @Override public void mouseClicked(java.awt.event.MouseEvent e) { action.run(); }
+            });
+         }
 
-    private void styleAsLink(JLabel l) {
-        l.setForeground(Color.BLACK);
-        l.setFont(l.getFont().deriveFont(Font.BOLD, 14f));
-        l.setBorder(BorderFactory.createEmptyBorder(2, 0, 2, 0));
-    }
+        private void styleAsLink(JLabel l) {
+            l.setForeground(Color.BLACK);
+            l.setFont(l.getFont().deriveFont(Font.BOLD, 14f));
+            l.setBorder(BorderFactory.createEmptyBorder(2, 0, 2, 0));
+        }
 
-    private void styleAsNav(JLabel l) {
-        l.setForeground(Color.BLACK);
-        l.setFont(l.getFont().deriveFont(Font.BOLD, 20f));
-        l.setBorder(BorderFactory.createEmptyBorder(2, 0, 2, 0));
-    }
+        private void styleAsNav(JLabel l) {
+            l.setForeground(Color.BLACK);
+            l.setFont(l.getFont().deriveFont(Font.BOLD, 20f));
+            l.setBorder(BorderFactory.createEmptyBorder(2, 0, 2, 0));
+        }
 
-    private void refreshUserLabel() {
-        lbUser.setText(userCtx.isSignedIn() ? userCtx.getName() : "Guest");
-    }
+        private void refreshUserLabel() {
+            lbUser.setText(userCtx.isSignedIn() ? userCtx.getName() : "Guest");
+        }
 
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
@@ -228,11 +239,12 @@ public class MainFrameForm extends javax.swing.JFrame {
         btnProfile = new javax.swing.JLabel();
         btnLogout = new javax.swing.JLabel();
         lbUser = new javax.swing.JLabel();
-        filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 20000));
+        filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 5), new java.awt.Dimension(300, 50), new java.awt.Dimension(300, 100));
+        search = new javax.swing.JTextField();
+        btnSearch = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         btnCart = new javax.swing.JLabel();
         btnOrders = new javax.swing.JLabel();
-        filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 32767));
         bannerLabel2 = new javax.swing.JPanel();
         lbTitle = new javax.swing.JLabel();
 
@@ -260,20 +272,41 @@ public class MainFrameForm extends javax.swing.JFrame {
         lbUser.setText("Guest");
         lbUser.setPreferredSize(new java.awt.Dimension(54, 35));
         sidebarPanel.add(lbUser);
-        sidebarPanel.add(filler2);
+        sidebarPanel.add(filler1);
+
+        search.setColumns(25);
+        search.setToolTipText("");
+        search.setAlignmentX(0.0F);
+        search.setMaximumSize(new java.awt.Dimension(150, 24));
+        search.setMixingCutoutShape(null);
+        search.setPreferredSize(new java.awt.Dimension(150, 25));
+        search.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                searchActionPerformed(evt);
+            }
+        });
+        sidebarPanel.add(search);
+
+        btnSearch.setText("Search");
+        btnSearch.setPreferredSize(new java.awt.Dimension(80, 25));
+        sidebarPanel.add(btnSearch);
 
         jLabel1.setFont(new java.awt.Font("American Typewriter", 1, 24)); // NOI18N
         jLabel1.setText("Books");
+        jLabel1.setMaximumSize(new java.awt.Dimension(74, 40));
+        jLabel1.setPreferredSize(new java.awt.Dimension(74, 40));
         sidebarPanel.add(jLabel1);
 
         btnCart.setFont(new java.awt.Font("American Typewriter", 1, 24)); // NOI18N
         btnCart.setText("Cart");
+        btnCart.setPreferredSize(new java.awt.Dimension(51, 40));
         sidebarPanel.add(btnCart);
 
         btnOrders.setFont(new java.awt.Font("American Typewriter", 1, 24)); // NOI18N
         btnOrders.setText("Orders");
+        btnOrders.setMaximumSize(new java.awt.Dimension(81, 40));
+        btnOrders.setPreferredSize(new java.awt.Dimension(81, 40));
         sidebarPanel.add(btnOrders);
-        sidebarPanel.add(filler1);
 
         mainSplit.setLeftComponent(sidebarPanel);
 
@@ -312,6 +345,10 @@ public class MainFrameForm extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    private void searchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_searchActionPerformed
+
     public static void main(String args[]) {
   
         java.awt.EventQueue.invokeLater(() -> new MainFrameForm().setVisible(true));
@@ -323,12 +360,13 @@ public class MainFrameForm extends javax.swing.JFrame {
     private javax.swing.JLabel btnLogout;
     private javax.swing.JLabel btnOrders;
     private javax.swing.JLabel btnProfile;
+    private javax.swing.JButton btnSearch;
     private javax.swing.Box.Filler filler1;
-    private javax.swing.Box.Filler filler2;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel lbTitle;
     private javax.swing.JLabel lbUser;
     private javax.swing.JSplitPane mainSplit;
+    private javax.swing.JTextField search;
     private javax.swing.JPanel sidebarPanel;
     // End of variables declaration//GEN-END:variables
 }
